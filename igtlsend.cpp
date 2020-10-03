@@ -39,6 +39,7 @@
 #include "igtlOSUtil.h"
 #include "igtlImageMessage.h"
 #include "igtlTransformMessage.h"
+#include "igtlStringMessage.h"
 #include "igtlMexClientSocket.h"
 
 using namespace std;
@@ -61,6 +62,7 @@ double& createMatlabScalar (mxArray*& ptr);
 int checkArguments(int nlhs, mxArray *plhs[],
                    int nrhs, const mxArray *prhs[]);
 
+int procStringData(int sd, const char* name, const mxArray *ptr);
 int procTransformData(int sd, const char* name, const mxArray *ptr);
 int procImageData(int sd, const char* name, const mxArray *ptr);
 template<typename DATATYPE> void procTypedImageData(int sd, const char* name, const mxArray* imField, const mxArray* trField, DATATYPE dtype);
@@ -119,7 +121,11 @@ void mexFunction (int nlhs, mxArray *plhs[],
   // ---------------------------------------------------------------
   // Process data field and send through OpenIGTLink connection
   int r;
-  if (strcmp(type, "TRANSFORM") == 0)
+  if (strcmp(type, "STRING") == 0)
+    {
+    r = procStringData(sd, name, prhs[ARG_ID_DATA]);
+    }
+  else if (strcmp(type, "TRANSFORM") == 0)
     {
     r = procTransformData(sd, name, prhs[ARG_ID_DATA]);
     }
@@ -172,6 +178,43 @@ int checkArguments(int nlhs, mxArray *plhs[],
 
 }
 
+
+int procStringData(int sd, const char* name, const mxArray *ptr)
+{  
+  char msg[MAX_STRING_LEN];
+
+  // Get DATA.string
+  mxArray*  stringField = mxGetField(ptr, 0, "String");
+  if (stringField == NULL)
+    {
+    mexErrMsgTxt("No DATA.String field.");
+    return 0;
+    }
+  mxGetString(stringField, msg, MAX_STRING_LEN);  
+
+  // ---------------------------------------------------------------
+  // Set up OpenIGTLink Connection
+  igtl::MexClientSocket::Pointer socket;
+  socket = igtl::MexClientSocket::New();
+  int r = socket->SetDescriptor(sd);
+  if (r != 0)
+    {
+    mexErrMsgTxt("Invalid socket descriptor.");
+    }
+
+  // ---------------------------------------------------------------
+  // Prepare String message
+  igtl::StringMessage::Pointer stringMsg = igtl::StringMessage::New();
+  stringMsg->SetDeviceName(name);
+  stringMsg->SetString(msg);
+  stringMsg->Pack();
+  socket->Send(stringMsg->GetPackPointer(), stringMsg->GetPackSize());
+
+  mexPrintf("The string has been sent.\n");
+
+  return 1;
+
+}
 
 int procTransformData(int sd, const char* name, const mxArray *ptr)
 {
