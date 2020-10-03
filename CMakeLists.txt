@@ -19,6 +19,15 @@ ENDIF(OpenIGTLink_PROTOCOL_VERSION_2)
 FIND_PACKAGE(OpenIGTLink REQUIRED)
 INCLUDE(${OpenIGTLink_USE_FILE})
 
+SET(OpenIGTLink_INCLUDE_DIRS 
+  ${OpenIGTLink_DIR}/
+  ${OpenIGTLink_SOURCE_DIR}/
+  ${OpenIGTLink_SOURCE_DIR}/Source/
+  ${OpenIGTLink_SOURCE_DIR}/Source/igtlutil
+  ${OpenIGTLink_SOURCE_DIR}/Source/WebSocket
+  ${OpenIGTLink_SOURCE_DIR}/Source/VideoStreaming
+)
+
 ##FIND_PACKAGE(Matlab REQUIRED) 
 # this should be implemented in the future.
 # However, this is needs to be combined with FindOctave.cmake.
@@ -71,9 +80,11 @@ IF(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 ENDIF(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  SET(LINK_LIBS "")
 ENDIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  SET(LINK_LIBS "")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
