@@ -20,9 +20,9 @@ FIND_PACKAGE(OpenIGTLink REQUIRED)
 INCLUDE(${OpenIGTLink_USE_FILE})
 
 SET(OpenIGTLink_INCLUDE_DIRS 
-  ${OpenIGTLink_DIR}/
-  ${OpenIGTLink_SOURCE_DIR}/
-  ${OpenIGTLink_SOURCE_DIR}/Source/
+  ${OpenIGTLink_DIR}
+  ${OpenIGTLink_SOURCE_DIR}
+  ${OpenIGTLink_SOURCE_DIR}/Source
   ${OpenIGTLink_SOURCE_DIR}/Source/igtlutil
   ${OpenIGTLink_SOURCE_DIR}/Source/WebSocket
   ${OpenIGTLink_SOURCE_DIR}/Source/VideoStreaming
