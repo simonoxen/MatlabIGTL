@@ -40,6 +40,7 @@
 #include "igtlImageMessage.h"
 #include "igtlTransformMessage.h"
 #include "igtlStringMessage.h"
+#include "igtlNDArrayMessage.h"
 #include "igtlMexClientSocket.h"
 
 using namespace std;
@@ -63,6 +64,7 @@ int checkArguments(int nlhs, mxArray *plhs[],
                    int nrhs, const mxArray *prhs[]);
 
 int procStringData(int sd, const char* name, const mxArray *ptr);
+int procNDArrayData(int sd, const char* name, const mxArray *ptr);
 int procTransformData(int sd, const char* name, const mxArray *ptr);
 int procImageData(int sd, const char* name, const mxArray *ptr);
 template<typename DATATYPE> void procTypedImageData(int sd, const char* name, const mxArray* imField, const mxArray* trField, DATATYPE dtype);
@@ -125,6 +127,10 @@ void mexFunction (int nlhs, mxArray *plhs[],
     {
     r = procStringData(sd, name, prhs[ARG_ID_DATA]);
     }
+  else if (strcmp(type, "NDARRAY") == 0)
+    {
+    r = procNDArrayData(sd, name, prhs[ARG_ID_DATA]);
+    }
   else if (strcmp(type, "TRANSFORM") == 0)
     {
     r = procTransformData(sd, name, prhs[ARG_ID_DATA]);
@@ -178,6 +184,63 @@ int checkArguments(int nlhs, mxArray *plhs[],
 
 }
 
+int procNDArrayData(int sd, const char* name, const mxArray *ptr)
+{  
+  char msg[MAX_STRING_LEN];
+
+  // Get DATA.string
+  mxArray*  stringField = mxGetField(ptr, 0, "String");
+  if (stringField == NULL)
+    {
+    mexErrMsgTxt("No DATA.String field.");
+    return 0;
+    }
+  mxGetString(stringField, msg, MAX_STRING_LEN);  
+
+  // ---------------------------------------------------------------
+  // Set up OpenIGTLink Connection
+  igtl::MexClientSocket::Pointer socket;
+  socket = igtl::MexClientSocket::New();
+  int r = socket->SetDescriptor(sd);
+  if (r != 0)
+    {
+    mexErrMsgTxt("Invalid socket descriptor.");
+    }
+
+  // ---------------------------------------------------------------
+  // Prepare NDArray message
+  igtl::Array<igtl_float64> array;
+  std::vector<igtlUint16> size(3);  
+  size[0] = 5;
+  size[1] = 4;
+  size[2] = 3;
+  array.SetSize(size);
+  int i,j,k;
+  igtl_float64 arrayFloat[120];
+  for (i = 0; i < size[0]; i ++)
+    {
+    for (j = 0; j < size[1]; j ++)
+      {
+      for (k = 0; k < size[2]; k ++)
+        {
+        arrayFloat[i*(4*3) + j*3 + k] = (igtl_float64) (i*(4*3) + j*3 + k);
+        }
+      }
+    }
+  array.SetArray((void*) arrayFloat);
+  igtl::NDArrayMessage::Pointer NDArraySendMsg = igtl::NDArrayMessage::New();
+  NDArraySendMsg->SetDeviceName(name);
+  NDArraySendMsg->SetArray(igtl::NDArrayMessage::TYPE_FLOAT64, &array);
+  // NDArraySendMsg->SetTimeStamp(0, 1234567892);
+  NDArraySendMsg->SetHeaderVersion(IGTL_HEADER_VERSION_1);
+  NDArraySendMsg->Pack();
+  socket->Send(NDArraySendMsg->GetPackPointer(), NDArraySendMsg->GetPackSize());
+
+  mexPrintf("The array has been sent.\n");
+
+  return 1;
+
+}
 
 int procStringData(int sd, const char* name, const mxArray *ptr)
 {  
