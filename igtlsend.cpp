@@ -254,7 +254,7 @@ int procStringData(int sd, const char* name, const mxArray *ptr)
 
   const mwSize*  s  = mxGetDimensions(stringField);
 
-  char msg[s[1]];
+  char* msg = new char[s[1]];
   mxGetString(stringField, msg, s[1]);  
   
   // ---------------------------------------------------------------
