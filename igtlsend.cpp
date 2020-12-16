@@ -244,8 +244,6 @@ int procNDArrayData(int sd, const char* name, const mxArray *ptr)
 
 int procStringData(int sd, const char* name, const mxArray *ptr)
 {  
-  char msg[MAX_STRING_LEN];
-
   // Get DATA.string
   mxArray*  stringField = mxGetField(ptr, 0, "String");
   if (stringField == NULL)
@@ -253,8 +251,12 @@ int procStringData(int sd, const char* name, const mxArray *ptr)
     mexErrMsgTxt("No DATA.String field.");
     return 0;
     }
-  mxGetString(stringField, msg, MAX_STRING_LEN);  
 
+  const mwSize*  s  = mxGetDimensions(stringField);
+
+  char msg[s[1]];
+  mxGetString(stringField, msg, s[1]);  
+  
   // ---------------------------------------------------------------
   // Set up OpenIGTLink Connection
   igtl::MexClientSocket::Pointer socket;
